@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Band name vote</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><text y=%27.9em%27 font-size=%2790%27>🎸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#EEF0F7; --panel:#FFFFFF; --ink:#14161F; --muted:#5B6075; --line:#14161F;
+  --c1:#2F3BFF; --c1t:#FFFFFF; --c2:#FF5C93; --c3:#FFD84D; --c4:#43E0B0; --on:#14161F;
+  --good:#1E9E6A; --bad:#D6334F;
+  --display:'Bricolage Grotesque','Arial Black',Impact,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0E0F17;--panel:#181A26;--ink:#F2F3FA;--muted:#9EA3B8;--line:#F2F3FA;--good:#4BD59A;--bad:#FF6B86}
+}
+:root[data-theme="dark"]{--bg:#0E0F17;--panel:#181A26;--ink:#F2F3FA;--muted:#9EA3B8;--line:#F2F3FA;--good:#4BD59A;--bad:#FF6B86}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:460px;margin:0 auto;padding:20px 18px 40px;min-height:100vh;display:flex;flex-direction:column}
+h1,h2{font-family:var(--display);font-weight:800;letter-spacing:-.02em;line-height:1.02;margin:0}
+h1{font-size:clamp(38px,12vw,54px)}
+h2{font-size:clamp(30px,9vw,40px)}
+p{margin:0}
+.muted{color:var(--muted)}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--c1);outline-offset:2px}
+
+/* welcome */
+.hero{margin:auto 0;padding:24px 0}
+.hero p{margin-top:14px;max-width:34ch}
+.field{display:flex;flex-direction:column;gap:10px;margin-top:28px}
+.field label{font-weight:700}
+input[type=text]{font:inherit;font-size:20px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);width:100%}
+.btn{border:2px solid var(--line);background:var(--ink);color:var(--bg);border-radius:14px;padding:14px 18px;font-weight:700;font-size:18px;box-shadow:4px 4px 0 var(--c1)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--c1)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none}
+.err{color:var(--bad);font-weight:500;min-height:1.4em}
+.choices{display:grid;gap:12px;margin-top:24px}
+.choices .btn{background:var(--panel);color:var(--ink);box-shadow:4px 4px 0 var(--c2)}
+
+/* vote */
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.top .who{font-weight:500;color:var(--muted)}
+.top .left{font-family:var(--display);font-weight:800;font-size:22px}
+.bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 12%,transparent);margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--c1);border-radius:99px;transition:width .3s}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;padding:26px 0;min-height:280px}
+.card{width:100%;aspect-ratio:4/4.4;max-height:52vh;border:2px solid var(--line);border-radius:26px;box-shadow:7px 7px 0 var(--line);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;background:var(--c1);color:var(--c1t);transition:transform .22s ease,opacity .22s ease}
+.card span{font-family:var(--display);font-weight:800;font-size:clamp(34px,11vw,52px);line-height:1;letter-spacing:-.025em;overflow-wrap:anywhere;text-wrap:balance}
+.card.k1{background:var(--c1);color:var(--c1t)}
+.card.k2{background:var(--c2);color:var(--on)}
+.card.k3{background:var(--c3);color:var(--on)}
+.card.k4{background:var(--c4);color:var(--on)}
+.card.out-l{transform:translateX(-120%) rotate(-10deg);opacity:0}
+.card.out-r{transform:translateX(120%) rotate(10deg);opacity:0}
+.card.out-u{transform:translateY(-120%) scale(.9);opacity:0}
+.votes{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:10px}
+.vb{border:2px solid var(--line);border-radius:18px;background:var(--panel);padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:700;font-size:15px;box-shadow:4px 4px 0 var(--line)}
+.vb b{font-size:28px;line-height:1.1}
+.vb small{font-weight:500;color:var(--muted);font-size:12px}
+.vb:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--line)}
+.vb.dis b{filter:grayscale(.2)}
+.vb.sup{background:var(--c3);color:#14161F}
+.vb.sup small{color:#14161F;opacity:.75}
+.vb:disabled{opacity:.5}
+.hint{text-align:center;font-size:13px;margin-top:14px}
+
+/* thanks / results */
+.panel{border:2px solid var(--line);border-radius:20px;background:var(--panel);padding:18px;margin-top:22px}
+.panel h3{margin:0 0 4px;font-family:var(--display);font-size:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{border:2px solid var(--line);border-radius:99px;padding:5px 14px;font-weight:700}
+.chip.pending{background:var(--c3);color:#14161F}
+.chip.done{background:transparent;color:var(--muted);border-color:color-mix(in srgb,var(--ink) 30%,transparent);font-weight:500}
+.chip.done::before{content:"✓ "}
+.big-ok{font-family:var(--display);font-weight:800;font-size:18px}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-top:1px solid color-mix(in srgb,var(--ink) 15%,transparent)}
+.row:first-of-type{border-top:0}
+.row .nm{font-weight:700}
+.row .sc{font-family:var(--display);font-weight:800;font-size:22px;text-align:right}
+.row .meta{grid-column:1/-1;font-size:13px;color:var(--muted)}
+.row .tr{grid-column:1/-1;height:6px;border-radius:99px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
+.row .tr i{display:block;height:100%;background:var(--c1);border-radius:99px}
+.row.drop .nm{text-decoration:line-through;opacity:.6}
+.tag{font-size:12px;font-weight:700;color:var(--bad);margin-left:6px}
+.stack{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+@media (prefers-reduced-motion:reduce){.card,.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const NAMES = [
+  "Garam Masala","Hot Take","Cut the Crap","The Delhi Theatre Collective","Once Upon a Time in Delhi",
+  "Expressway","Stank Radio","Delhi Radio Club","The Capital Club","7 Notes","Urban Radio",
+  "Midnight Radio Club","Radio Avenue","Silver Spoon","Filter Coffee","Soft Static",
+  "Coconut Boulevard","Chalta Firta","Desi Delay","B Side Bollywood","Origami Kites",
+  "Flamingo","Cranes","Lakes","Glass Towers"
+].map((label,i)=>({id:"n"+(i+1),label}));
+const NAME_BY_ID = Object.fromEntries(NAMES.map(n=>[n.id,n]));
+
+const MEMBERS = [
+  {k:"darsan",n:"Darsan"},{k:"sunny",n:"Sunny"},{k:"kanha",n:"Kanha"},
+  {k:"nikhil",n:"Nikhil"},{k:"tanvi",n:"Tanvi"},{k:"titus",n:"Titus"},{k:"hans",n:"Hans"}
+];
+const ALIASES = {nihkil:"nikhil"};
+const PER_PERSON = 12;      // names shown to each person
+const DROP_AT = 2;          // dislikes after which a name stops being shown
+
+/* ===== SETUP: paste your Firebase Realtime Database URL here (see README steps) ===== */
+const DB_URL = "https://bandvoting-8dcfc-default-rtdb.asia-southeast1.firebasedatabase.app";   // e.g. https://my-band-vote-default-rtdb.firebaseio.com
+
+const api = {
+  base(){ return DB_URL.replace(/\/+$/,""); },
+  async req(method, path, body){
+    const r = await fetch(this.base()+"/"+path+".json", {
+      method,
+      headers: body===undefined ? undefined : {"Content-Type":"application/json"},
+      body: body===undefined ? undefined : JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  },
+  get(path){ return this.req("GET",path); },
+  put(path,b){ return this.req("PUT",path,b); },
+  patch(path,b){ return this.req("PATCH",path,b); }
+};
+async function loadVotes(){ const v=await api.get("votes"); return v||{}; }
+
+const $app = document.getElementById("app");
+let isOwner=false, pollTimer=null;
+let votesMap={}, snapReady=false, cur="loading";
+let me=null, docRef=null, mine=null, idx=0, busy=false, chain=Promise.resolve(), saveErr=null;
+
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const memberName = k => (MEMBERS.find(m=>m.k===k)||{n:k}).n;
+
+function shell(inner){ $app.innerHTML = inner; }
+
+/* ---------- screens ---------- */
+function showLoading(){ cur="loading"; shell(`<div class="hero"><h2>Loading…</h2></div>`); }
+
+function showBlocked(msg){
+  cur="blocked";
+  shell(`<div class="hero"><h2>Can't open the vote</h2><p class="muted">${esc(msg)}</p></div>`);
+}
+
+function showWelcome(err){
+  cur="welcome";
+  shell(`
+    <div class="hero">
+      <h1>What should we be called?</h1>
+      <p class="muted">${NAMES.length} band name ideas. You'll rate ${PER_PERSON} of them, one at a time. It takes about a minute.</p>
+      <div class="field">
+        <label for="nm">Your name</label>
+        <input id="nm" type="text" autocomplete="off" autocapitalize="words" placeholder="e.g. Tanvi">
+        <div class="err" id="err">${err?esc(err):""}</div>
+        <button class="btn" id="go">Start voting</button>
+      </div>
+      
+    </div>`);
+  const inp=document.getElementById("nm");
+  const go=()=>submitName(inp.value);
+  document.getElementById("go").onclick=go;
+  inp.onkeydown=e=>{ if(e.key==="Enter") go(); };
+  inp.focus();
+}
+
+function showAshish(){
+  cur="ashish";
+  shell(`
+    <div class="hero">
+      <h2>Which Ashish?</h2>
+      <p class="muted">Pick who you are.</p>
+      <div class="choices">
+        <button class="btn" data-k="titus">Titus</button>
+        <button class="btn" data-k="hans">Hans</button>
+        <button class="btn ghost" id="back">Back</button>
+      </div>
+    </div>`);
+  $app.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>begin(b.dataset.k));
+  document.getElementById("back").onclick=()=>showWelcome();
+}
+
+function showVote(){
+  cur="vote";
+  const total=mine.queue.length, remaining=total-idx;
+  const n=NAME_BY_ID[mine.queue[idx]];
+  shell(`
+    <div class="top"><span class="who">${esc(me.n)}</span><span class="left" id="left">${remaining} left</span></div>
+    <div class="bar"><i style="width:${(idx/total)*100}%"></i></div>
+    <div class="stage"><div class="card k${(idx%4)+1}" id="card"><span>${esc(n.label)}</span></div></div>
+    <div class="votes">
+      <button class="vb dis" data-v="-1" aria-label="Dislike"><b>👎</b>Dislike</button>
+      <button class="vb" data-v="1" aria-label="Like"><b>👍</b>Like<small>+1</small></button>
+      <button class="vb sup" data-v="2" aria-label="Superlike"><b>⭐</b>Superlike<small>counts as 2</small></button>
+    </div>
+    <p class="hint muted">Keys: 1 dislike, 2 like, 3 superlike</p>`);
+  $app.querySelectorAll(".vb").forEach(b=>b.onclick=()=>vote(Number(b.dataset.v)));
+}
+
+function showSaving(){ cur="saving"; shell(`<div class="hero"><h2>Saving your votes…</h2></div>`); }
+
+function showSaveError(){
+  cur="saveerr";
+  shell(`
+    <div class="hero">
+      <h2>Your votes didn't save</h2>
+      <p class="muted">Check your connection, then try again. Your answers are still on this screen.</p>
+      <div class="stack"><button class="btn" id="retry">Try saving again</button></div>
+    </div>`);
+  document.getElementById("retry").onclick=async()=>{
+    showSaving(); saveErr=null;
+    try{ await api.put("votes/"+me.k, mine); showThanks(); }catch(e){ saveErr=e; showSaveError(); }
+  };
+}
+
+function showThanks(){
+  cur="thanks";
+  const doneKeys=MEMBERS.filter(m=>votesMap[m.k]&&votesMap[m.k].done||(m.k===me.k)).map(m=>m.k);
+  const pending=MEMBERS.filter(m=>!doneKeys.includes(m.k));
+  shell(`
+    <div class="hero">
+      <h1>Thanks, ${esc(me.n)}.</h1>
+      <p class="muted">Your votes are saved.</p>
+      <div class="panel" id="status"></div>
+    </div>`);
+  renderStatus();
+  startPolling();
+}
+
+function renderStatus(){
+  const el=document.getElementById("status"); if(!el||!me) return;
+  const isDone=m=> m.k===me.k || (votesMap[m.k]&&votesMap[m.k].done);
+  const done=MEMBERS.filter(isDone), pending=MEMBERS.filter(m=>!isDone(m));
+  el.innerHTML = pending.length
+    ? `<h3>${done.length} of ${MEMBERS.length} have voted</h3>
+       <p class="muted">Still to vote:</p>
+       <div class="chips">${pending.map(m=>`<span class="chip pending">${esc(m.n)}</span>`).join("")}</div>
+       <p class="muted" style="margin-top:16px">Done:</p>
+       <div class="chips">${done.map(m=>`<span class="chip done">${esc(m.n)}</span>`).join("")}</div>`
+    : `<h3 class="big-ok">Everyone has voted.</h3>
+       <div class="chips">${done.map(m=>`<span class="chip done">${esc(m.n)}</span>`).join("")}</div>`;
+}
+
+function tally(){
+  const t=Object.fromEntries(NAMES.map(n=>[n.id,{up:0,sup:0,down:0,score:0,count:0}]));
+  Object.values(votesMap).forEach(v=>Object.entries(v.ratings||{}).forEach(([id,r])=>{
+    const x=t[id]; if(!x) return;
+    x.count++; x.score+=r;
+    if(r===2) x.sup++; else if(r===1) x.up++; else if(r<0) x.down++;
+  }));
+  return t;
+}
+
+function showResults(){
+  cur="results"; renderResults();
+}
+function renderResults(){
+  const t=tally();
+  const list=NAMES.map(n=>({n,...t[n.id]})).sort((a,b)=>b.score-a.score||b.count-a.count);
+  const max=Math.max(1,...list.map(x=>Math.abs(x.score)));
+  const voted=MEMBERS.filter(m=>votesMap[m.k]&&votesMap[m.k].done).length;
+  shell(`
+    <div class="top"><h2>Results</h2><span class="muted">${voted} of ${MEMBERS.length} finished</span></div>
+    <p class="muted" style="margin-top:8px">Score = likes + 2 per superlike − dislikes. Updates live.</p>
+    <div class="panel">
+      ${list.map(x=>`
+        <div class="row ${x.down>=DROP_AT?"drop":""}">
+          <div class="nm">${esc(x.n.label)}${x.down>=DROP_AT?`<span class="tag">dropped</span>`:""}</div>
+          <div class="sc">${x.score>0?"+":""}${x.score}</div>
+          <div class="tr"><i style="width:${Math.max(0,x.score)/max*100}%"></i></div>
+          <div class="meta">⭐ ${x.sup} · 👍 ${x.up} · 👎 ${x.down} · ${x.count} vote${x.count===1?"":"s"}</div>
+        </div>`).join("")}
+    </div>
+    <div class="stack"><button class="btn ghost" id="back">Back</button></div>`);
+  document.getElementById("back").onclick=()=>{ stopPolling(); location.hash=""; showWelcome(); };
+}
+
+/* ---------- logic ---------- */
+function submitName(raw){
+  let s=(raw||"").trim().toLowerCase();
+  if(!s) return showWelcome("Enter your name to start.");
+  if(s==="ashish") return showAshish();
+  s=ALIASES[s]||s;
+  const m=MEMBERS.find(m=>m.k===s||m.n.toLowerCase()===s);
+  if(!m) return showWelcome("That name isn't on the band list. Try your first name.");
+  begin(m.k);
+}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+async function begin(key){
+  me=MEMBERS.find(m=>m.k===key);
+  showLoading();
+  try{ votesMap=await loadVotes(); }catch(e){ return showBlocked("Couldn't reach the vote database. Check your connection and refresh."); }
+  const existing=votesMap[key];
+
+  if(existing && existing.done){ mine=existing; return showThanks(); }
+
+  if(existing && Array.isArray(existing.queue)){
+    mine={member:key,queue:existing.queue,ratings:existing.ratings||{},done:false};
+    idx=mine.queue.findIndex(id=>!(id in mine.ratings));
+    if(idx<0){ idx=mine.queue.length; return finish(); }
+    return showVote();
+  }
+
+  // fresh queue: skip names already disliked by 2+ people, favour names with fewest votes so far
+  const counts={},dis={};
+  NAMES.forEach(n=>{counts[n.id]=0;dis[n.id]=0;});
+  Object.values(votesMap).forEach(v=>Object.entries(v.ratings||{}).forEach(([id,r])=>{
+    if(id in counts){counts[id]++; if(r<0) dis[id]++;}
+  }));
+  let pool=NAMES.filter(n=>dis[n.id]<DROP_AT)
+    .map(n=>({id:n.id,s:counts[n.id]+Math.random()*1.5}))
+    .sort((a,b)=>a.s-b.s).slice(0,PER_PERSON).map(x=>x.id);
+  shuffle(pool);
+  mine={member:key,queue:pool,ratings:{},done:false,startedAt:Date.now()};
+  idx=0;
+  try{ await api.put("votes/"+key, mine); }
+  catch(e){ return showBlocked("Couldn't save to the vote database. Check your connection and refresh."); }
+  showVote();
+}
+
+function queueSave(fn){ chain=chain.then(fn).catch(e=>{saveErr=e;}); }
+
+function vote(v){
+  if(busy) return; busy=true;
+  const id=mine.queue[idx];
+  mine.ratings[id]=v;
+  queueSave(()=>api.patch("votes/"+me.k+"/ratings",{[id]:v}));
+  const card=document.getElementById("card");
+  card.classList.add(v<0?"out-l":v===2?"out-u":"out-r");
+  document.querySelectorAll(".vb").forEach(b=>b.disabled=true);
+  const wait=matchMedia("(prefers-reduced-motion: reduce)").matches?0:220;
+  setTimeout(()=>{
+    idx++; busy=false;
+    if(idx>=mine.queue.length) finish(); else showVote();
+  },wait);
+}
+
+async function finish(){
+  showSaving();
+  mine.done=true;
+  queueSave(()=>api.patch("votes/"+me.k,{done:true,finishedAt:Date.now()}));
+  await chain;
+  if(saveErr){ return showSaveError(); }
+  votesMap[me.k]=mine;
+  showThanks();
+}
+
+document.addEventListener("keydown",e=>{
+  if(cur!=="vote"||busy) return;
+  if(e.key==="1") vote(-1); else if(e.key==="2") vote(1); else if(e.key==="3") vote(2);
+});
+
+/* ---------- live status ---------- */
+function startPolling(){
+  stopPolling();
+  pollTimer=setInterval(async()=>{
+    if(cur!=="thanks" && cur!=="results") return stopPolling();
+    try{
+      votesMap=await loadVotes();
+      if(cur==="thanks") renderStatus(); else renderResults();
+    }catch(e){}
+  },5000);
+}
+function stopPolling(){ if(pollTimer){clearInterval(pollTimer);pollTimer=null;} }
+
+/* ---------- start ---------- */
+async function init(){
+  if(!DB_URL || DB_URL.indexOf("PASTE_")===0)
+    return showBlocked("The vote database isn't set up yet. Add the database URL at the top of index.html.");
+  if(location.hash==="#results"){
+    showLoading();
+    try{ votesMap=await loadVotes(); }catch(e){ return showBlocked("Couldn't reach the vote database."); }
+    showResults(); startPolling(); return;
+  }
+  showWelcome();
+}
+init();
+</script>
+</body>
+</html>
